@@ -12,25 +12,20 @@ exports.createNote = async (req, res) => {
   }
 };
 
-// Get All Notes
-// exports.getNotes = async (req, res) => {
-//   try {
-//     const notes = await Note.find().sort({ createdAt: -1 });
-//     res.status(200).json(notes);
-//   } catch (error) {
-//     res.status(500).json({ error: "Failed to fetch notes" });
-//   }
-// };
-
 // Get All Notes with Pagination
 exports.getNotes = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const sortBy = req.query.sortBy || "createdAt";
+    const order = req.query.order === "asc" ? 1 : -1;
 
     const [notes, total] = await Promise.all([
-      Note.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Note.find()
+        .sort({ [sortBy]: order }) // dynamic sort
+        .skip(skip)
+        .limit(limit),
       Note.countDocuments(),
     ]);
 
@@ -85,7 +80,6 @@ exports.deleteNote = async (req, res) => {
   }
 };
 
-// Search Notes
 // Search Notes with Pagination
 exports.searchNotes = async (req, res) => {
   try {
@@ -93,6 +87,8 @@ exports.searchNotes = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const sortBy = req.query.sortBy || "createdAt";
+    const order = req.query.order === "asc" ? 1 : -1;
 
     const regex = new RegExp(query, "i");
 
@@ -100,7 +96,7 @@ exports.searchNotes = async (req, res) => {
       Note.find({
         $or: [{ name: regex }, { content: regex }],
       })
-        .sort({ createdAt: -1 })
+        .sort({ [sortBy]: order })
         .skip(skip)
         .limit(limit),
       Note.countDocuments({
